@@ -35,6 +35,7 @@
 #include <avr/eeprom.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+#include <avr/interrupt.h>
 #include <avr/wdt.h>
 
 #include <inttypes.h>
@@ -146,6 +147,7 @@ static inline void read_memory(char memtype, uint16_t address, uint8_t length);
 
 void start_application() __attribute__ ((naked));
 
+uint8_t doReset = 0;
 
 /**
  * @brief Main entry point
@@ -166,6 +168,7 @@ int main(int argc, char* argv[])
     MCUSR = 0;
 
     // Disable watchdog to prevent indefinite boot loops
+    cli();
     wdt_disable();
 
     // Set up Timer0
@@ -242,15 +245,21 @@ int main(int argc, char* argv[])
 
     #endif
 
+    uint8_t ch;
+
     // Used in main loop for Cmnd_STK_LOAD_ADDRESS and Cmnd_STK_PROG_PAGE
     uint16_t address = 0;
     uint8_t length;
+
+    {
+        ch = get_ch();
+    } while (ch != Cmnd_STK_GET_SYNC);
+    put_ch(Resp_STK_INSYNC);
 
     // Forever loop: exits by timeout within get_ch()
     while(1) {
 
         // Get character from UART
-        uint8_t ch = get_ch();
 
         if (ch == Cmnd_STK_GET_PARAMETER) {
 
@@ -360,13 +369,14 @@ int main(int argc, char* argv[])
 
         } else {
 
-            // This covers the response to commands like STK_ENTER_PROGMODE
+            // This covers the response to commands like STK_ENTER_PROGMODE or STK_GET_SYNC
             verify_command_terminator();
 
         }
 
         put_ch(Resp_STK_OK);
 
+        ch = get_ch();
     }
 
 }
@@ -564,6 +574,8 @@ void verify_command_terminator()
  */
 void start_application()
 {
+
+    doReset = 0;
 
     // Reset I/O registers
     DDRB = 0;

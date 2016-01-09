@@ -11,10 +11,13 @@ OBJDUMP     = $(GCCROOT)avr-objdump
 SIZE        = $(GCCROOT)avr-size
 
 wordclock: TARGET = $@
-wordclock: MCU_TARGET = atmega328p
+#wordclock: MCU_TARGET = atmega328p
+wordclock: MCU_TARGET = atmega168
 wordclock: AVR_FREQ = 8000000L
-wordclock: LDSECTIONS = -Wl,--section-start=.text=0x7c00
-wordclock: CFLAGS += -DBAUD_RATE=9600
+#wordclock: LDSECTIONS = -Wl,--section-start=.text=0x7c00
+wordclock: LDSECTIONS = -Wl,--section-start=.text=0x3c00
+#wordclock: CFLAGS += -DBAUD_RATE=9600
+wordclock: CFLAGS += -DBAUD_RATE=38400
 wordclock: CFLAGS += -DLED_START_FLASHES=3
 wordclock: CFLAGS += -DLED_DATA_FLASH=1
 wordclock: CFLAGS += -DENABLE_RGB_SUPPORT=1
